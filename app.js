@@ -1,7 +1,21 @@
+
+
 import express from "express";
+import usersRouter from "#routes/users";
+import tasksRouter from "#routes/tasks";
+import getUserFromToken from "#middleware/getUserFromToken";
+
 const app = express();
+
+app.use(express.json());
+app.use(getUserFromToken);
+
+app.use("/users", usersRouter);
+app.use("/tasks", tasksRouter);
+
 export default app;
 
+// Error handlers
 app.use((err, req, res, next) => {
   switch (err.code) {
     // Invalid type

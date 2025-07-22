@@ -1,13 +1,29 @@
-import db from "#db/client";
+import pg from 'pg';
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+dotenv.config();
 
-import { createTask } from "#db/queries/tasks";
-import { createUser } from "#db/queries/users";
-
-await db.connect();
-await seed();
-await db.end();
-console.log("🌱 Database seeded.");
+const { Pool } = pg;
+const pool = new Pool();
 
 async function seed() {
-  // TODO
+  await pool.query('DELETE FROM tasks');
+  await pool.query('DELETE FROM users');
+
+  const passwordHash = await bcrypt.hash('password123', 10);
+  const userRes = await pool.query(
+    'INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id',
+    ['testuser', passwordHash]
+  );
+  const userId = userRes.rows[0].id;
+
+  await pool.query(
+    'INSERT INTO tasks (user_id, title, done) VALUES ($1, $2, $3), ($1, $4, $5), ($1, $6, $7)',
+    [userId, 'First Task', false, 'Second Task', true, 'Third Task', false]
+  );
+
+  console.log('🌱 Database seeded.');
+  await pool.end();
 }
+
+seed();
